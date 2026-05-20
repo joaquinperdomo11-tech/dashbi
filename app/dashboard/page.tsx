@@ -162,7 +162,7 @@ export default function DashboardPage() {
                     const parts = d.fecha.split("/");
                     const label = `${parts[0]}/${parts[1]}`;
                     return (
-                      <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4,position:"relative",group:"true"}}
+                      <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4,position:"relative"}}
                         title={`${d.fecha}\n${fmt(d.ingresos)}\n${d.ordenes} órdenes`}>
                         <div style={{width:"100%",background:"var(--accent)",borderRadius:"4px 4px 0 0",height:h,opacity:0.85,transition:"opacity 0.2s",cursor:"pointer"}}
                           onMouseEnter={e => (e.currentTarget.style.opacity="1")}
