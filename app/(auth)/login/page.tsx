@@ -17,8 +17,24 @@ export default function LoginPage() {
     setError("");
     const supabase = createClient();
     const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
-    if (loginError) { setError("Email o contraseña incorrectos"); setLoading(false); return; }
-    router.push("/dashboard");
+    if (loginError) {
+      setError("Email o contraseña incorrectos");
+      setLoading(false);
+      return;
+    }
+    // Check if tenant has ML connected
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: tenant } = await supabase
+        .from("tenants").select("ml_user_id").eq("user_id", user.id).single();
+      if (!tenant?.ml_user_id) {
+        router.push("/onboarding");
+      } else {
+        router.push("/dashboard");
+      }
+    } else {
+      router.push("/dashboard");
+    }
   };
 
   return (
