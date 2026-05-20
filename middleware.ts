@@ -19,17 +19,22 @@ export async function middleware(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   const { pathname } = req.nextUrl;
 
-  const publicRoutes = ["/", "/login", "/register", "/api/ml/callback"];
+  // Rutas siempre públicas
+  const publicRoutes = ["/", "/login", "/register", "/api/", "/onboarding", "/inactive"];
   if (publicRoutes.some(r => pathname.startsWith(r))) return res;
 
+  // No logueado → login
   if (!user) return NextResponse.redirect(new URL("/login", req.url));
 
+  // Solo verificar suscripción en /dashboard
   if (pathname.startsWith("/dashboard")) {
     const { data: tenant } = await supabase
-      .from("tenants").select("status, trial_ends_at, ml_user_id").eq("user_id", user.id).single();
+      .from("tenants")
+      .select("status, trial_ends_at, ml_user_id")
+      .eq("user_id", user.id)
+      .single();
 
     if (!tenant) return NextResponse.redirect(new URL("/onboarding", req.url));
-    if (!tenant.ml_user_id) return NextResponse.redirect(new URL("/onboarding", req.url));
 
     const now = new Date();
     const isTrial  = tenant.status === "trial" && new Date(tenant.trial_ends_at) > now;
