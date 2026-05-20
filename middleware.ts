@@ -9,7 +9,7 @@ export async function middleware(req: NextRequest) {
     {
       cookies: {
         getAll() { return req.cookies.getAll(); },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
           cookiesToSet.forEach(({ name, value, options }) => res.cookies.set(name, value, options));
         },
       },
@@ -19,14 +19,11 @@ export async function middleware(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   const { pathname } = req.nextUrl;
 
-  // Public routes
   const publicRoutes = ["/", "/login", "/register", "/api/ml/callback"];
   if (publicRoutes.some(r => pathname.startsWith(r))) return res;
 
-  // Not logged in → login
   if (!user) return NextResponse.redirect(new URL("/login", req.url));
 
-  // Check tenant status for dashboard routes
   if (pathname.startsWith("/dashboard")) {
     const { data: tenant } = await supabase
       .from("tenants").select("status, trial_ends_at, ml_user_id").eq("user_id", user.id).single();
@@ -34,10 +31,9 @@ export async function middleware(req: NextRequest) {
     if (!tenant) return NextResponse.redirect(new URL("/onboarding", req.url));
     if (!tenant.ml_user_id) return NextResponse.redirect(new URL("/onboarding", req.url));
 
-    // Check trial/subscription
     const now = new Date();
-    const isTrial   = tenant.status === "trial" && new Date(tenant.trial_ends_at) > now;
-    const isActive  = tenant.status === "active";
+    const isTrial  = tenant.status === "trial" && new Date(tenant.trial_ends_at) > now;
+    const isActive = tenant.status === "active";
     if (!isTrial && !isActive) return NextResponse.redirect(new URL("/inactive", req.url));
   }
 
